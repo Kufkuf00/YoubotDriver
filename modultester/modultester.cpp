@@ -3,6 +3,7 @@
 #include "RawConstantJointSpeedTask.hpp"
 #include "Time.hpp"
 #include "Logger.hpp"
+#include <DummyTask.hpp>
 
 using namespace youbot;
 
@@ -15,7 +16,7 @@ int main(int argc, char *argv[])
   //youBotArmConfig_fromMoveIt.json");
   //youBotArmConfig_fromKeisler.json");
 
-  YoubotManipulatorModul modul(configpath, false);
+  YoubotManipulatorModul modul(configpath, true);
 
   modul.StartThreadAndInitialize();
 
@@ -32,6 +33,9 @@ int main(int argc, char *argv[])
 
   ManipulatorTask::Ptr task2 = std::make_shared<ZeroCurrentManipulatorTask>();
   //modul.NewManipulatorTask(task2, 50);
+
+  ManipulatorTask::Ptr dummyTask = std::make_shared<DummyTask>();
+  modul.NewManipulatorTask(dummyTask,10000);
   
   // Lets see what's happening
   for (int i = 0; i < 700; i++) {

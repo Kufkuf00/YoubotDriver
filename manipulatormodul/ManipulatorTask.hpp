@@ -15,7 +15,8 @@ namespace youbot {
       JOINT_POSITION, //forbidden
       JOINT_VELOCITY,
       JOINT_TORQUE,
-      ENCODER_SET_REFERENCE
+      ENCODER_SET_REFERENCE,
+      DUMMY_TASK
     } type;
     Eigen::VectorXd value;
 
@@ -31,7 +32,8 @@ namespace youbot {
       INITIALIZATION,
       STOPPED,
       ZERO_CURRENT,
-      RAW_CONSTANT_JOINTSPEED // currently these types are defined
+      RAW_CONSTANT_JOINTSPEED ,// currently these types are defined
+      DUMMY_TASK
     };
     static std::string Type2String(TaskType type);
 

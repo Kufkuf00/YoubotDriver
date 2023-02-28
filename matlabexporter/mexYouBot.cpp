@@ -14,6 +14,7 @@
 /* youBot headers */
 #include "YoubotManipulatorModul.hpp"
 #include "RawConstantJointSpeedTask.hpp"
+#include <DummyTask.hpp>
 
 using namespace youbot;
 
@@ -105,6 +106,9 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[]) {
       case 2:
         task = std::make_shared<ZeroCurrentManipulatorTask>();
         break;
+      case 3:
+          task = std::make_shared<DummyTask>();
+          break;
       }
       modul->NewManipulatorTask(task, tlimit);
       return;
