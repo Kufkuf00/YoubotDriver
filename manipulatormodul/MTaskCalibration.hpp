@@ -5,27 +5,27 @@
 #include "Eigen/dense"
 
 namespace youbot {
-  /// <summary>
- /// Task that send out commutation initialization command and finishes as all of the joints are initialized
- /// 
- /// TODO!!
- /// </summary>
-  class MTaskCalibration : public MTask {
-    bool finished = false;
+	/// <summary>
+   /// Task that send out commutation initialization command and finishes as all of the joints are initialized
+   /// 
+   /// TODO!!
+   /// </summary>
+	class MTaskCalibration : public MTask 
+	{
+		
 
-  public:
-    ManipulatorCommand GetCommand(const JointsState& new_state) override {
-      return ManipulatorCommand(BLDCCommand::MOTOR_STOP,Eigen::VectorXd(5));
-    }
+	public:
+		ManipulatorCommand GetCommand(const JointsState& new_state) override ;
+		
 
-    TaskType GetType() const override {
-      return CALIBRATION;
-    }
+		TaskType GetType() const override;
+		
 
-  protected:
-    bool _taskFinished() const override {
-      return true;
-    }
-  };
+	protected:
+		bool _taskFinished() const override;
+		bool finished = false;
+		double calJointRadPerSec = 0.23;
+
+	};
 }
 #endif
