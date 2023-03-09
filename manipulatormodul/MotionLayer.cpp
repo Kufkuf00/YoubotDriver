@@ -228,7 +228,7 @@ void MotionLayer::Initialize() {
   }
   // Initialize manipulator
   if (!man)
-    man = std::make_unique<Manipulator>(config, center);
+  man = std::make_unique<Manipulator>(config, center);
   man->CollectBasicJointParameters();
   man->ConfigJointControlParameters();
   man->CheckAndResetErrorFlagsViaMailbox();

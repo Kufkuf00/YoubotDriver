@@ -23,8 +23,6 @@ namespace youbot {
 
 	protected:
 		bool _taskFinished() const override;
-		bool finished = false;
-		double calJointRadPerSec = 0.23;
 
 	};
 }

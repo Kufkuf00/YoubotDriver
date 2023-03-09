@@ -84,8 +84,7 @@ void Manipulator::Calibrate(bool forceCalibration) {
 	  CheckI2tAndTimeoutErrorProcess();
 	  // Check if enough time elapsed (in the first 200ms, the joints can start to move)
 	  SLEEP_MILLISEC(3);
-	  if (std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::steady_clock::now() - start).count() < 200)
+	  if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 200)
 		continue; // in the first 200[ms] let the joints start moving
 	  // if dt>200ms, check if the joint has already stopped
 	  std::string str = "Calibration vel: ";

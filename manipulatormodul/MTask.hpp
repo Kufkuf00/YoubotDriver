@@ -76,6 +76,9 @@ namespace youbot {
 
     ManipulatorCommand(const BLDCCommand& cmd0, const BLDCCommand& cmd1, const BLDCCommand& cmd2,
       const BLDCCommand& cmd3, const BLDCCommand& cmd4); ///< Constructor to use different command types
+    
+    ManipulatorCommand::ManipulatorCommand(const BLDCCommand cmd[]);
+  
   };
 
   /// <summary>

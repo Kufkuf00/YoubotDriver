@@ -37,6 +37,15 @@ youbot::ManipulatorCommand::ManipulatorCommand(const BLDCCommand& cmd0, const BL
   commands[4] = cmd4;
 }
 
+youbot::ManipulatorCommand::ManipulatorCommand(const BLDCCommand cmd[]) {
+    for (size_t i = 0; i < 5; i++)
+    {
+        commands[i] = cmd[i];
+    }
+}
+
+
+
 // Called by the motion layer
 
 void youbot::MTask::Initialize(const JointsState& start_state_) { // Called by the motion layer

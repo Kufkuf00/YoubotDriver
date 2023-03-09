@@ -10,69 +10,86 @@
 using namespace youbot;
 
 bool still_moving[5] = { true,true,true,true,true };
-int cycles_in_zero_speed[5] = { 0,0,0,0,0 };
-int sinceEndPoint;
-bool forward[5];
-int jointSinceEndPoint[5];
-double calibrationSpeed = 0.5;
+int cyclesInZero[5] = { 0,0,0,0,0 };
+int reachedSince=0;
+double holdingCurrent = 30;
+double calVelocity = 0.10;
+auto start = std::chrono::steady_clock::now();
+BLDCCommand mCommands[5];
 
-ManipulatorCommand MTaskCalibration::GetCommand(const JointsState& new_state) {
-	Eigen::VectorXd dq(5);
-	
+//int jointSinceEndPoint[5];
+
+
+ManipulatorCommand MTaskCalibration::GetCommand(const JointsState& new_state) 
+{
+	if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 200)
+	{	
+		return ManipulatorCommand(BLDCCommand(BLDCCommand::JOINT_VELOCITY, calVelocity), BLDCCommand(BLDCCommand::JOINT_VELOCITY, calVelocity), BLDCCommand(BLDCCommand::JOINT_VELOCITY, calVelocity), BLDCCommand(BLDCCommand::JOINT_VELOCITY, calVelocity), BLDCCommand(BLDCCommand::JOINT_VELOCITY, calVelocity));
+	}
+
 	for (size_t i = 0; i < 5; i++)
 	{
-		
-		double vel = (new_state.joint[i].dq).value;
-		if (vel > 0)
-		{
-			forward[i] = true;
-			cycles_in_zero_speed[i] = 0;
-		}
-		else if(vel<0)
-		{
-			forward[i] = false;
-			cycles_in_zero_speed[i] = 0;
+		if (still_moving[i]) {
+			double v = new_state.joint[i].dq.value;
+			if (v<0.01&&v>-0.01)
+			{
+				cyclesInZero[i]++;
+			}
+			else
+			{
+				cyclesInZero[i] = 0;
+			}
+			bool positive = false;
+			if (v > 0)
+			{
+				positive = true;
+			}
+			if (cyclesInZero[i] >4)
+			{
+				mCommands[i] = BLDCCommand(BLDCCommand::MOTOR_CURRENT_MA,holdingCurrent);
+				still_moving[i] = false;
+			}
+			else
+			{
+				mCommands[i] = BLDCCommand(BLDCCommand::JOINT_VELOCITY, calVelocity);
+			}
 		}
 		else
 		{
-			cycles_in_zero_speed[i]++;
+			mCommands[i] = BLDCCommand(BLDCCommand::MOTOR_CURRENT_MA,holdingCurrent);
 		}
+		
 
-		if(cycles_in_zero_speed[i]>4)
-		{
-			still_moving[i] = false;
-		}
 	}
-
-	if (still_moving[0] || still_moving[1] || still_moving[2] || still_moving[3] || still_moving[4]){
-		sinceEndPoint = 0;
-	}
-	else {
-		sinceEndPoint++;
-	}
-	
-	for (size_t i = 0; i < 5; i++)
-	{
-		if (still_moving[i])
-		{
-			dq[i] = calibrationSpeed;
-		}
-		else {
-			dq[i] = 0;
-		}
-	}
-	if (sinceEndPoint > 4)
-	{
-		//finished = true;
-	}
-	return ManipulatorCommand(BLDCCommand::JOINT_VELOCITY, dq);
-
+	return ManipulatorCommand(mCommands);
 }
 
 MTask::TaskType MTaskCalibration::GetType() const {
 	return CALIBRATION;
 }
 
-bool MTaskCalibration::_taskFinished() const{
-	return true;
+bool MTaskCalibration::_taskFinished() const {
+	int i = 0;
+	while (i < 5 && !still_moving[i]);
+	{
+		i++;
+	} 
+
+		if (i ==5) {
+			
+			reachedSince++;
+		}
+		else {
+			reachedSince = 0;
+		}
+
+
+	if (reachedSince < 6)
+	{
+		return false;
+	}
+	else {
+		return true;
+	}
+
 }

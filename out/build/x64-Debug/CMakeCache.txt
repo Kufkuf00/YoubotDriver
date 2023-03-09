@@ -23,8 +23,8 @@ CMAKE_BUILD_TYPE:STRING=Debug
 //Configuration types
 CMAKE_CONFIGURATION_TYPES:STRING=Debug;Release;MinSizeRel;RelWithDebInfo
 
-//CXX compiler
-CMAKE_CXX_COMPILER:STRING=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.35.32215/bin/Hostx64/x64/cl.exe
+//No help, variable specified on the command line.
+CMAKE_CXX_COMPILER:FILEPATH=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.35.32215/bin/Hostx64/x64/cl.exe
 
 //Flags used by the CXX compiler during all build types.
 CMAKE_CXX_FLAGS:STRING=/DWIN32 /D_WINDOWS /GR /EHsc
