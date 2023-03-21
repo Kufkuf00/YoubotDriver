@@ -52,121 +52,122 @@ void Manipulator::InitJointCommutation() {
 }
 
 void Manipulator::Calibrate(bool forceCalibration) {
-	// Check if all joints are calibrated
-	if (!forceCalibration)
-		if (IsAllJointsCalibratedViaMailbox())
-			return; // if all of them are calibrated, then calibration is not necessary, return
-	// otherwise perform the full calibration
-	const double calJointRadPerSec = 0.35;
-	// RESET I2t flags
-	CheckAndResetI2tFlagsViaMailbox();
-	// Req calibration velocity
-	for (int i = 0; i < 5; i++) {
-		bool backward = bool(config.jointConfigs[i].at("CalibrationDirection"))
-			^ bool(config.jointConfigs[i].at("qDirectionSameAsEnc"));
-		joints[i]->ReqJointSpeedRadPerSec(backward ? -calJointRadPerSec : calJointRadPerSec);
-		log(Log::info, "Calibration of joint " + std::to_string(i) + "started");
-	}
-	// Reset timeouts (after all possible i2t reset or it can go to timeout again)
+  // Check if all joints are calibrated
+  if (!forceCalibration)
+	if (IsAllJointsCalibratedViaMailbox())
+	  return; // if all of them are calibrated, then calibration is not necessary, return
+  // otherwise perform the full calibration
+  const double calJointRadPerSec = 0.35;
+  // RESET I2t flags
+  CheckAndResetI2tFlagsViaMailbox();
+  // Req calibration velocity
+  for (int i = 0; i < 5; i++) {
+	bool backward = bool(config.jointConfigs[i].at("CalibrationDirection"))
+	  ^ bool(config.jointConfigs[i].at("qDirectionSameAsEnc"));
+	joints[i]->ReqJointSpeedRadPerSec(backward ? -calJointRadPerSec : calJointRadPerSec);
+	log(Log::info, "Calibration of joint " + std::to_string(i) + "started");
+  }
+  // Reset timeouts (after all possible i2t reset or it can go to timeout again)
+  for (int i = 0; i < 5; i++)
+	joints[i]->ResetTimeoutViaMailbox();
+  // Main calibration loop: move with constant speed and check if it has stopped
+  {
+	auto start = std::chrono::steady_clock::now();
+	int reached_since = 0; // reached the limit position for x cycles 
+	bool still_moving[5] = { true,true,true,true,true };
+	int cycles_in_zero_speed[5] = { 0,0,0,0,0 }; //counters for ~0 speed, if achieves 5->still moving to zero
+	center->ExchangeProcessMsg(); // do sg to avoid a new timout
+	SLEEP_MILLISEC(2); // Wait until the status flag of process messages will be refreshed (without timeout flag)
+	do {
+	  center->ExchangeProcessMsg();
+	  // Check status
+	  CheckI2tAndTimeoutErrorProcess();
+	  // Check if enough time elapsed (in the first 200ms, the joints can start to move)
+	  SLEEP_MILLISEC(3);
+	  if (std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::steady_clock::now() - start).count() < 200)
+		continue; // in the first 200[ms] let the joints start moving
+	  // if dt>200ms, check if the joint has already stopped
+	  std::string str = "Calibration vel: ";
+	  for (int i = 0; i < 5; i++)
+		if (still_moving[i]) {
+		  int vel = joints[i]->GetRPMLatest().value;
+		  str = str + std::to_string(vel) + "RPM ";
+		  if (vel<5 && vel>-5) // if it is ~stopped, increase its counter
+			cycles_in_zero_speed[i]++;
+		  else
+			cycles_in_zero_speed[i] = 0; // if it is moving, null the counter
+		  // if it has stopped for 5 cycles, hold via small current
+		  if (cycles_in_zero_speed[i] >= 5) {
+			log(Log::info, "Joint " + std::to_string(i) + " at endposition");
+			bool sign = bool(config.jointConfigs[i].at("CalibrationDirection"));
+			int holding_current = 30; //[mA]
+			joints[i]->ReqMotorCurrentmA(sign ? holding_current : -holding_current);
+			still_moving[i] = false; // change state
+		  }
+		}
+		else { // if it has reached the holding state do nothing
+		  int motorticks = joints[i]->GetTicksLatest().value;
+		  str = str + std::to_string(motorticks) + "motorticks ";
+		}
+	  log(Log::info, str);
+	  // if all joints just holding increase a counter - to let the hold current command start working
+	  if (still_moving[0] || still_moving[1] || still_moving[2]
+		|| still_moving[3] || still_moving[4])
+		reached_since = 0;
+	  else
+		reached_since++;
+	} while (reached_since <= 5);
+  }
+  // Now all joints are holding the endposition with 30mA
+  // Start reference setting
+  // (it does need a few milliseconds, we wait here still the returned positions become ~0)
+  {
+	auto start = std::chrono::steady_clock::now();
 	for (int i = 0; i < 5; i++)
-		joints[i]->ResetTimeoutViaMailbox();
-	// Main calibration loop: move with constant speed and check if it has stopped
-	{
-		auto start = std::chrono::steady_clock::now();
-		int reached_since = 0; //reached the limit position for x cycles 
-		bool still_moving[5] = { true,true,true,true,true };
-		int cycles_in_zero_speed[5] = { 0,0,0,0,0 }; //counters for ~0 speed, if achieves 5->still moving to zero
-		center->ExchangeProcessMsg(); // do sg to avoid a new timout
-		SLEEP_MILLISEC(2); // Wait until the status flag of process messages will be refreshed (without timeout flag)
-		do {
-			center->ExchangeProcessMsg();
-			// Check status
-			CheckI2tAndTimeoutErrorProcess();
-			// Check if enough time elapsed (in the first 200ms, the joints can start to move)
-			SLEEP_MILLISEC(3);
-			if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 200)
-				continue; // in the first 200[ms] let the joints start moving
-			// if dt>200ms, check if the joint has already stopped
-			std::string str = "Calibration vel: ";
-			for (int i = 0; i < 5; i++)
-				if (still_moving[i]) {
-					int vel = joints[i]->GetRPMLatest().value;
-					str = str + std::to_string(vel) + "RPM ";
-					if (vel<5 && vel>-5) // if it is ~stopped, increase its counter
-						cycles_in_zero_speed[i]++;
-					else
-						cycles_in_zero_speed[i] = 0; // if it is moving, null the counter
-					// if it has stopped for 5 cycles, hold via small current
-					if (cycles_in_zero_speed[i] >= 5) {
-						log(Log::info, "Joint " + std::to_string(i) + " at endposition");
-						bool sign = bool(config.jointConfigs[i].at("CalibrationDirection"));
-						int holding_current = 30; //[mA]
-						joints[i]->ReqMotorCurrentmA(sign ? holding_current : -holding_current);
-						still_moving[i] = false; // change state
-					}
-				}
-				else { // if it has reached the holding state do nothing
-					int ticks = joints[i]->GetTicksLatest().value;
-					str = str + std::to_string(ticks) + "ticks ";
-				}
-			log(Log::info, str);
-			// if all joints just holding increase a counter - to let the hold current command start working
-			if (still_moving[0] || still_moving[1] || still_moving[2]
-				|| still_moving[3] || still_moving[4])
-				reached_since = 0;
-			else
-				reached_since++;
-		} while (reached_since <= 5);
-	}
-	// Now all joints are holding the endposition with 30mA
-	// Start reference setting
-	// (it does need a few milliseconds, we wait here still the returned positions become ~0)
-	{
-		auto start = std::chrono::steady_clock::now();
-		for (int i = 0; i < 5; i++)
-			joints[i]->ReqEncoderReference(0);
-		bool allSet;
-		do {
-			center->ExchangeProcessMsg(); // do sg to avoid a new timout
-			allSet = true;
-			std::string str;
-			for (int i = 0; i < 5; i++) {
-				int ticks = joints[i]->GetTicksLatest().value;
-				if (abs(ticks) > 3)
-					allSet = false;
-				int mA = joints[i]->GetMALatest().value;
-				str = str + std::to_string(ticks) + "ticks (" + std::to_string(mA) + "mA) ";
-			}
-			log(Log::info, str);
-			int elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::steady_clock::now() - start).count();
-			if (elapsed_ms > 2000) {
-				// Stop the manipulator
-				ReqManipulatorStop();
-				center->ExchangeProcessMsg();
-				// Save/send error messages
-				log(Log::fatal, "During calibration unsuccessful reference setting (>2000[ms])");
-				SLEEP_MILLISEC(2) // leave time to log...
-					throw std::runtime_error("During calibration unsuccessful reference setting (>2000[ms])");
-			}
-			SLEEP_MILLISEC(2)
-		} while (!allSet);
-			int elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::steady_clock::now() - start).count();
-			log(Log::info, "Encoders nulled, elapsed time: " + std::to_string(elapsed_ms) + "[ms]");
-	}
-	// Set to idle:
-	for (int i = 0; i < 5; i++)
-		joints[i]->ReqVoltagePWM(0);
-	center->ExchangeProcessMsg();
-	// Save that the joints are calibrated now
-	for (int i = 0; i < 5; i++)
-		joints[i]->SetCalibratedViaMailbox();
-	// Print the after calibration status
-	log(Log::info, "After calibration:");
-	for (auto& it : joints) {
-		it->LogLatestState();
-	}
+	  joints[i]->ReqEncoderReference(0);
+	bool allSet;
+	do {
+	  center->ExchangeProcessMsg(); // do sg to avoid a new timout
+	  allSet = true;
+	  std::string str;
+	  for (int i = 0; i < 5; i++) {
+		int motorticks = joints[i]->GetTicksLatest().value;
+		if (abs(motorticks) > 3)
+		  allSet = false;
+		int mA = joints[i]->GetMALatest().value;
+		str = str + std::to_string(motorticks) + "motorticks (" + std::to_string(mA) + "mA) ";
+	  }
+	  log(Log::info, str);
+	  int elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::steady_clock::now() - start).count();
+	  if (elapsed_ms > 2000) {
+		// Stop the manipulator
+		ReqManipulatorStop();
+		center->ExchangeProcessMsg();
+		// Save/send error messages
+		log(Log::fatal, "During calibration unsuccessful reference setting (>2000[ms])");
+		SLEEP_MILLISEC(2) // leave time to log...
+		throw std::runtime_error("During calibration unsuccessful reference setting (>2000[ms])");
+	  }
+	  SLEEP_MILLISEC(2)
+	} while (!allSet);
+	int elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+	  std::chrono::steady_clock::now() - start).count();
+	log(Log::info, "Encoders nulled, elapsed time: " + std::to_string(elapsed_ms) + "[ms]");
+  }
+  // Set to idle:
+  for (int i = 0; i < 5; i++)
+	joints[i]->ReqVoltagePWM(0);
+  center->ExchangeProcessMsg();
+  // Save that the joints are calibrated now
+  for (int i = 0; i < 5; i++)
+	joints[i]->SetCalibratedViaMailbox();
+  // Print the after calibration status
+  log(Log::info, "After calibration:");
+  for (auto& it : joints) {
+	it->LogLatestState();
+  }
 }
 
 void Manipulator::ReqJointPositionRad(double q0,
@@ -276,4 +277,9 @@ bool youbot::Manipulator::IsAllJointsCalibratedViaMailbox() {
 		if (!joints[i]->IsCalibratedViaMailbox())
 			return false;
 	return true;
+}
+
+void youbot::Manipulator::SetAllJointsCalibratedViaMailbox() {
+	for (int i = 0; i < 5; i++)
+		joints[i]->SetCalibratedViaMailbox();
 }

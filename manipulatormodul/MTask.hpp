@@ -70,6 +70,8 @@ namespace youbot {
   struct ManipulatorCommand {
     BLDCCommand commands[5];
 
+    ManipulatorCommand(); //< Constructor with MotorStop commands
+
     ManipulatorCommand(BLDCCommand::Type type, const Eigen::VectorXd& value); ///< Constructor for same type and double values 
 
     ManipulatorCommand(BLDCCommand::Type type, const Eigen::VectorXi& value); ///< Constructor for same type and int values 
@@ -91,12 +93,12 @@ namespace youbot {
     /// Task types currently implemented
     /// </summary>
     enum TaskType {
-      NOT_DEFINED,
-      COMMUTATION,
-      CALIBRATION,
-      STOPPED,
-      ZERO_CURRENT,
-      RAW_CONSTANT_JOINTSPEED // currently these types are defined
+      NOT_DEFINED = 0,
+      COMMUTATION = 1,
+      CALIBRATION = 2,
+      STOPPED = 3,
+      ZERO_CURRENT = 4,
+      RAW_CONSTANT_JOINTSPEED = 5 // currently these types are defined
     };
 
     static std::string Type2String(TaskType type); ///< Generate string from task type

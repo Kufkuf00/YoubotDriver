@@ -187,6 +187,7 @@ void youbot::MotionLayer::DoManipulatorTask(MTask::Ptr task, double time_limit) 
       }
       if (task->GetType() == MTask::CALIBRATION) {
         auto status = manipulatorStatus.load();
+        man->SetAllJointsCalibratedViaMailbox();
         status.Set(ManipulatorStatus::CALIBRATED, true);
         manipulatorStatus.store(status);
       }
@@ -209,6 +210,7 @@ void MotionLayer::Initialize() {
   {
     auto status = manipulatorStatus.load();
     status.Set(ManipulatorStatus::START_UP, true);
+    motionStatus.store(MTask::NOT_DEFINED);
     manipulatorStatus.store(status);
   }
   // Get Configfile
@@ -238,6 +240,13 @@ void MotionLayer::Initialize() {
   man->CollectBasicJointParameters();
   man->ConfigJointControlParameters();
   man->CheckAndResetErrorFlagsViaMailbox();
+  bool isCommutated = true;
+  for (int i = 0; i < 5; i++)
+    if (!man->GetJoint(i)->GetJointStatusViaMailbox().Initialized()) {
+      isCommutated = false;
+      break;
+    }
+  bool isCalibrated = isCommutated && man->IsAllJointsCalibratedViaMailbox();
   /*
   // Commutation
   man->InitializeManipulator();
@@ -257,9 +266,12 @@ void MotionLayer::Initialize() {
     auto status = manipulatorStatus.load();
     status.Set(ManipulatorStatus::START_UP, false);
     status.Set(ManipulatorStatus::CONFIGURATED, true);
+    if (isCommutated)
+      status.Set(ManipulatorStatus::COMMUTATION_INITIALIZED, true);
+    if (isCalibrated)
+      status.Set(ManipulatorStatus::CALIBRATED, true);
     manipulatorStatus.store(status);
   }
-  motionStatus.store(MTask::STOPPED);
 }
 
 bool youbot::MotionLayer::ManipulatorStatus::IsConfigInProgress() const {

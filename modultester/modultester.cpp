@@ -19,56 +19,32 @@ int main(int argc, char *argv[])
   //youBotArmConfig_fromMoveIt.json");
   //youBotArmConfig_fromKeisler.json");
 
-  Manager modul(configpath,false);
-
+  Manager modul(configpath, false);
   modul.StartThreadAndInitialize();
-
-  std::string sg = modul.GetStatus().manipulatorStatus.ToString();
-  // Wait until configuration ends
-  do {
+  while (modul.GetStatus().motion != MTask::STOPPED) // while till config and auto tasks end
     SLEEP_MILLISEC(10);
-  } while (!modul.GetStatus().manipulatorStatus.IsConfigurated());
-  std::string sg2 = modul.GetStatus().manipulatorStatus.ToString();
-  /*
-  // Commutation initialization - if it was not, just to test it
-  {
-    MTask::Ptr task0 = std::make_shared<MTaskCommutation>();
-    modul.NewManipulatorTask(task0, 5);
-    // Wait until COMMUTATION initialization ends
-    do {
-      SLEEP_MILLISEC(10);
-      modul.GetStatus().LogStatus();
-      log(Log::info, "Kommutalas");
-    } while (modul.GetStatus().motion == MTask::COMMUTATION);
-  }*/
-  /*
-  {
-      MTask::Ptr task1 = std::make_shared<MTaskCalibration>();
-      modul.NewManipulatorTask(task1, 5);
-      do {
-          SLEEP_MILLISEC(10);
-          modul.GetStatus().LogStatus();
-          log(Log::info, "EZ ITT A KALIBRACIO");
-      } while (modul.GetStatus().motion == MTask::CALIBRATION);
-  }//*/
-
-  std::this_thread::sleep_for(std::chrono::seconds(10000));
-
-  // Free drive
-  {
-    MTask::Ptr task2 = std::make_shared<MTaskZeroCurrent>();
-    modul.NewManipulatorTask(task2, 50);
-    for (int i = 0; i < 7000; i++) {
-      SLEEP_MILLISEC(10);
-      modul.GetStatus().LogStatus();
-    }
-  }
 
   // Create and start a task
-  Eigen::VectorXd dq(5);
-  dq << 0.1, 0.1, -0.1, 0.1, -0.1;
-  MTask::Ptr task = std::make_shared<MTaskRawConstantJointSpeed>(dq, 10);
-  modul.NewManipulatorTask(task, 5);
+  {
+    Eigen::VectorXd dq(5);
+    dq << 0.1, 0.1, -0.1, 0.1, -0.1;
+    MTask::Ptr task = std::make_shared<MTaskRawConstantJointSpeed>(dq, 10);
+    modul.NewManipulatorTask(task, 5);
+    auto start = std::chrono::steady_clock::now();
+    do {
+      //modul.GetStatus().LogStatus();
+      SLEEP_MILLISEC(10);
+    } while (std::chrono::duration_cast<std::chrono::seconds>(
+      std::chrono::steady_clock::now() - start).count() < 5);
+  }
+
+
+  // Stop and go home
+  modul.StopThread();
+
+  return 0;
+
+ 
 
   
   //modul.NewManipulatorTask(task2, 50);
