@@ -11,7 +11,7 @@ namespace youbot {
   /// Task that send out commutation initialization command and finishes as all of the joints are initialized
   /// </summary>
   class MTaskCommutation : public MTask {
-    bool finished = false;
+      bool finished = false;
 
   public:
     ManipulatorCommand GetCommand(const JointsState& new_state) override;

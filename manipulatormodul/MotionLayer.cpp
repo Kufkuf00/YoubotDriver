@@ -65,6 +65,7 @@ void youbot::MotionLayer::_SoftLimit(
       }
     }
   }
+  ;
 }
 
 youbot::MotionLayer::Status youbot::MotionLayer::GetStatus() {
@@ -99,7 +100,7 @@ Eigen::VectorXd youbot::MotionLayer::GetTrueStatus() const {
 }
 
 void youbot::MotionLayer::StopManipulatorTask() {
-  if (motionStatus.load() != MTask::COMMUTATION)
+  if (motionStatus.load() != MTask::COMMUTATION || motionStatus.load() != MTask::CALIBRATION)
     stoptask = true;
 }
 
@@ -120,7 +121,9 @@ void youbot::MotionLayer::DoManipulatorTask(MTask::Ptr task, double time_limit) 
     for (int i = 0; i < 5; i++) {
       auto& cmd_ = man_c.commands[i];
       auto& j = man->GetJoint(i);
-      switch (cmd_.GetType()) {
+      ;
+      auto t = cmd_.GetType();
+      switch (t) {
       case BLDCCommand::JOINT_POSITION:
         if (!manipulatorStatus.load().IsCalibrated())
           throw std::runtime_error("Position command used on not calibrated arm");
@@ -173,6 +176,9 @@ void youbot::MotionLayer::DoManipulatorTask(MTask::Ptr task, double time_limit) 
     SLEEP_MILLISEC(10);// compute adaptively the remained time..
     elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::steady_clock::now() - start).count();
+    /*if (task->GetType() == MTask::COMMUTATION) {
+        ;
+    }*/
     if (task->Finished()) {
       if (task->GetType() == MTask::COMMUTATION) {
         auto status = manipulatorStatus.load();
@@ -246,7 +252,7 @@ void MotionLayer::Initialize() {
     auto status = manipulatorStatus.load();
     status.Set(ManipulatorStatus::CALIBRATED, true);
     manipulatorStatus.store(status);
-  }*/
+  }//*/
   {
     auto status = manipulatorStatus.load();
     status.Set(ManipulatorStatus::START_UP, false);

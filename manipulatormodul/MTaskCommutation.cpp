@@ -1,5 +1,6 @@
 #include "MTaskCommutation.hpp"
 #include "Time.hpp"
+#include "Logger.hpp"
 
 using namespace youbot;
 
@@ -18,6 +19,7 @@ ManipulatorCommand youbot::MTaskCommutation::GetCommand(const JointsState& new_s
             cmd[i] = BLDCCommand(BLDCCommand::MOTOR_STOP, 0);
         else
             cmd[i] = BLDCCommand(BLDCCommand::INITIALIZE_COMMUTATION, 0);
+        //log(Log::info, "KOMMUTACIO");
     }
     // Send out the resulting commands
     return { cmd[0], cmd[1], cmd[2], cmd[3], cmd[4] };

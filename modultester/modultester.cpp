@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   //youBotArmConfig_fromMoveIt.json");
   //youBotArmConfig_fromKeisler.json");
 
-  Manager modul(configpath, true);
+  Manager modul(configpath,false);
 
   modul.StartThreadAndInitialize();
 
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     SLEEP_MILLISEC(10);
   } while (!modul.GetStatus().manipulatorStatus.IsConfigurated());
   std::string sg2 = modul.GetStatus().manipulatorStatus.ToString();
-
+  /*
   // Commutation initialization - if it was not, just to test it
   {
     MTask::Ptr task0 = std::make_shared<MTaskCommutation>();
@@ -38,9 +38,22 @@ int main(int argc, char *argv[])
     do {
       SLEEP_MILLISEC(10);
       modul.GetStatus().LogStatus();
+      log(Log::info, "Kommutalas");
     } while (modul.GetStatus().motion == MTask::COMMUTATION);
-  }
-  
+  }*/
+  /*
+  {
+      MTask::Ptr task1 = std::make_shared<MTaskCalibration>();
+      modul.NewManipulatorTask(task1, 5);
+      do {
+          SLEEP_MILLISEC(10);
+          modul.GetStatus().LogStatus();
+          log(Log::info, "EZ ITT A KALIBRACIO");
+      } while (modul.GetStatus().motion == MTask::CALIBRATION);
+  }//*/
+
+  std::this_thread::sleep_for(std::chrono::seconds(10000));
+
   // Free drive
   {
     MTask::Ptr task2 = std::make_shared<MTaskZeroCurrent>();
