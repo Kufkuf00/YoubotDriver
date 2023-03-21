@@ -10,7 +10,7 @@ namespace youbot {
    /// 
    /// TODO!!
    /// </summary>
-	class MTaskCalibration : public MTask 
+	class MTaskCalibrationK : public MTask 
 	{
 		
 	public:

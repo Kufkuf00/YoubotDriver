@@ -27,7 +27,7 @@ std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 //int jointSinceEndPoint[5];
 
 
-ManipulatorCommand MTaskCalibration::GetCommand(const JointsState& new_state)
+ManipulatorCommand MTaskCalibrationK::GetCommand(const JointsState& new_state)
 {
 	//Manipulator::CheckI2tAndTimeoutErrorProcess();
 		
@@ -98,7 +98,7 @@ ManipulatorCommand MTaskCalibration::GetCommand(const JointsState& new_state)
 	return mCommands;
 }
 
-MTask::TaskType MTaskCalibration::GetType() const {
+MTask::TaskType MTaskCalibrationK::GetType() const {
 	return MTask::TaskType::CALIBRATION;
 }
 
