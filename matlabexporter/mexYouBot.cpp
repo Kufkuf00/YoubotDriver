@@ -18,6 +18,7 @@
 #include "MTaskCalibration.hpp"
 #include "MTaskZeroCurrent.hpp"
 #include "MTaskStop.hpp"
+#include "MTaskJointPozition.hpp"
 
 using namespace youbot;
 
@@ -114,8 +115,19 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[]) {
         task = std::make_shared<MTaskZeroCurrent>();
         break;
       case 5:
-        task = std::make_shared<MTaskRawConstantJointSpeed>(param / 180. * M_PI, tlimit);
+        task = std::make_shared<MTaskRawConstantJointSpeed>(param, tlimit);
         break;
+      case 6:
+         task = std::make_shared<MTaskJointPozition>(param);
+         break;
+      case 7:
+          task = std::make_shared<MTaskJointPozition>(param, tlimit);
+          tlimit = 15;
+          break;
+      case 8:
+          task = std::make_shared<MTaskZeroCurrent>();
+                //////////////////////////////////////////////////////////////////////////////////////////////////////
+          break;
       }
       modul->NewManipulatorTask(task, tlimit);
       return;
@@ -169,6 +181,9 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[]) {
         case MTask::RAW_CONSTANT_JOINTSPEED:
           *mode_ = 5;
           break;
+        case MTask::JOINT_POZITION:
+            *mode_ = 6;
+            break;
         default:
           *mode_ = 10;
         }

@@ -12,55 +12,55 @@ namespace youbot {
 /// Templates are used to allow to use it with double and int as well.
 /// </summary>
   class BLDCCommand {
-  public:
-    /// <summary>
-    /// Command types currently used and handled in the MotionLayer
-    /// 
-    /// "int" for MOTOR_TICK, MOTOR_RPM, MOTOR_CURRENT_MA, ENCODER_SET_REFERENCE;
-    /// "double" for JOINT_POSITION, JOINT_VELOCITY, JOINT_TORQUE
-    /// </summary>
-    enum Type {
-      NOT_DEFINED, // will cause std::runtime_error
-      JOINT_POSITION, //forbidden for TMCM-1610 firmware 1.48
-      JOINT_VELOCITY,
-      JOINT_TORQUE,
-      MOTOR_TICK,
-      MOTOR_RPM,
-      MOTOR_CURRENT_MA,
-      MOTOR_VOLTAGE,
-      MOTOR_STOP,
-      ENCODER_SET_REFERENCE, // be careful
-      INITIALIZE_COMMUTATION // be careful
-    };
+      public:
+        /// <summary>
+        /// Command types currently used and handled in the MotionLayer
+        /// 
+        /// "int" for MOTOR_TICK, MOTOR_RPM, MOTOR_CURRENT_MA, ENCODER_SET_REFERENCE;
+        /// "double" for JOINT_POSITION, JOINT_VELOCITY, JOINT_TORQUE
+        /// </summary>
+            enum Type {
+              NOT_DEFINED, // will cause std::runtime_error
+              JOINT_POSITION, //forbidden for TMCM-1610 firmware 1.48
+              JOINT_VELOCITY,
+              JOINT_TORQUE,
+              MOTOR_TICK,
+              MOTOR_RPM,
+              MOTOR_CURRENT_MA,
+              MOTOR_VOLTAGE,
+              MOTOR_STOP,
+              ENCODER_SET_REFERENCE, // be careful
+              INITIALIZE_COMMUTATION // be careful
+            };
 
-    BLDCCommand() : type(NOT_DEFINED), i_value(0), d_value(0) {}; ///! Empty constructor
+            BLDCCommand() : type(NOT_DEFINED), i_value(0), d_value(0) {}; ///! Empty constructor
 
-    template <class T>
-    BLDCCommand(Type type_, T value_) : type(type_), i_value(value_), d_value(value_) {} ///! constructor for double input
+            template <class T>
+            BLDCCommand(Type type_, T value_) : type(type_), i_value(value_), d_value(value_) {} ///! constructor for double input
 
-    template <class T>
-    void Set(T value_) { i_value = value_; d_value = value_; } ///! Set the value
+            template <class T>
+            void Set(T value_) { i_value = value_; d_value = value_; } ///! Set the value
 
-    /// <summary>
-    /// Get the current value
-    /// </summary>
-    /// <typeparam name="T"> double/int according to the aims </typeparam>
-    /// <returns></returns>
-    template <class T>
-    T Get() const {
-      if constexpr (std::is_same_v<T, int>)
-        return i_value;
-      if constexpr (std::is_same_v<T, double>)
-        return d_value;
-      throw std::runtime_error("not allowed input");
-    }
+            /// <summary>
+            /// Get the current value
+            /// </summary>
+            /// <typeparam name="T"> double/int according to the aims </typeparam>
+            /// <returns></returns>
+            template <class T>
+            T Get() const {
+              if constexpr (std::is_same_v<T, int>)
+                return i_value;
+              if constexpr (std::is_same_v<T, double>)
+                return d_value;
+              throw std::runtime_error("not allowed input");
+            }
 
-    Type GetType() const { return type; } ///! Get the command type
+            Type GetType() const { return type; } ///! Get the command type
 
-  private:
-    Type type;
-    int i_value;
-    double d_value;
+      private:
+        Type type;
+        int i_value;
+        double d_value;
   };
 
   /// <summary>
@@ -98,7 +98,9 @@ namespace youbot {
       CALIBRATION = 2,
       STOPPED = 3,
       ZERO_CURRENT = 4,
-      RAW_CONSTANT_JOINTSPEED = 5 // currently these types are defined
+      RAW_CONSTANT_JOINTSPEED = 5 ,// currently these types are defined
+      JOINT_POZITION=6,
+      FREE_DRIVE=8
     };
 
     static std::string Type2String(TaskType type); ///< Generate string from task type

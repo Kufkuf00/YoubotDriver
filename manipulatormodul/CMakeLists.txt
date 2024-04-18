@@ -8,6 +8,7 @@ set(SOURCES
     MTaskCommutation.cpp
     MTaskStop.cpp
     MTaskZeroCurrent.cpp
+    MTaskJointPozition.cpp
 )
 
 set(HEADERS
@@ -19,6 +20,7 @@ set(HEADERS
     MTaskCommutation.hpp
     MTaskStop.hpp
     MTaskZeroCurrent.hpp
+    MTaskJointPozition.hpp
 )
 
 set(INTRINSIC_HEADERS

@@ -90,7 +90,7 @@ namespace youbot {
     JointState(const Data<double>& q, const Data<int32_t>& motorticks,
       const Data<double>& dq, const Data<int32_t>& motorRPM,
       const Data<double>& tau, const Data<JointStatus>& status);
-  };
+ };
 
   /// <summary>
   /// Describes the state of the 5 joints

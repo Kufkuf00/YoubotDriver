@@ -12,6 +12,8 @@ std::string youbot::MTask::Type2String(TaskType type) {
     return "STOPPED";
   case youbot::MTask::RAW_CONSTANT_JOINTSPEED:
     return "CONSTANT_JOINTSPEED";
+  case youbot::MTask::JOINT_POZITION :
+      return "Joint_Position";
   default:
     return "Conversion not implemented";
   }
